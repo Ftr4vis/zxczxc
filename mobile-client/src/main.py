@@ -153,12 +153,8 @@ def confirm_payment(invoice_id: int):
 
 def access(name):
     response = requests.post(f'{CARS_URL}/car/occupy/{name}')
-    if response.status_code == 200:
-        print(response.json()['message'])
-        return response.json()
-    else:
-        print(response.json()['message'])
-        return response.json()
+    print(response.json()['message'])
+    return response.json()
 
 def start_travel(brand):
     response = requests.post(f'{CARS_URL}/car/start/{brand}')

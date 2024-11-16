@@ -158,12 +158,8 @@ def access(name):
 
 def start_travel(brand):
     response = requests.post(f'{CARS_URL}/car/start/{brand}')
-    if response.status_code == 200:
-        print(response.json()['message'])
-        return response.json()
-    else:
-        print(response.json()['message'])
-        return response.json()
+    print(response.json()['message'])
+    return response.json()
 
 
 def stop_travel(brand):
@@ -177,11 +173,10 @@ def stop_travel(brand):
 
 @app.errorhandler(HTTPException)
 def handle_exception(e):
-    response = e.get_response()
     return jsonify({
         "status": e.code,
         "name": e.name,
-    }), e.code
+    })
 
 
 def start_web():

@@ -1,21 +1,41 @@
 import os
 import json
 import threading
+import jwt
+import datetime
+from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
 
 from uuid import uuid4
 from confluent_kafka import Consumer, OFFSET_BEGINNING
 
 from .producer import proceed_to_deliver
 
+SECRET_KEY = "supersecretkey"  # Используйте из config.ini
+ALGORITHM = "HS256"
 
 MODULE_NAME: str = os.getenv("MODULE_NAME")
 
 #def auth(data):
 
-def send_to_sender_car(details):
+def send_to_sender_car(id, details):
     details["deliver_to"] = "sender-car"
-    proceed_to_deliver(details)
+    proceed_to_deliver(id, details)
 
+def create_token(user_id, role, expiration_minutes=30):
+    payload = {
+        "user_id": user_id,
+        "role": role,
+        "exp": datetime.datetime.utcnow() + datetime.timedelta(minutes=expiration_minutes)
+    }
+    return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
+
+def verify_token(token):
+    try:
+        return jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+    except ExpiredSignatureError:
+        raise ValueError("Token has expired")
+    except InvalidTokenError:
+        raise ValueError("Invalid token")
 
 def handle_event(id, details_str):
     """ Обработчик входящих в модуль задач. """

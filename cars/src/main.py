@@ -203,7 +203,7 @@ def handle_exception(e):
     return jsonify({
         "status": e.code,
         "name": e.name,
-    }), e.code
+    })
 
 
 def start_web():

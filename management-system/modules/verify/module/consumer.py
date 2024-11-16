@@ -10,26 +10,27 @@ from .producer import proceed_to_deliver
 
 MODULE_NAME: str = os.getenv("MODULE_NAME")
 
-def send_to_auth(id, details):
-    details["deliver_to"] = "auth"
-    proceed_to_deliver(id, details)
+def send_to_auth(event_details):
+    event_details["deliver_to"] = "auth"
+    proceed_to_deliver(event_details)
 
-def handle_event(id, details_str):
+def handle_event(event_id, event_details_json):
     """ Обработчик входящих в модуль задач. """
-    details = json.loads(details_str)
+    event_details = json.loads(event_details_json)
 
-    source: str = details.get("source")
-    deliver_to: str = details.get("deliver_to")
-    data: str = details.get("data")
-    operation: str = details.get("operation")
+    source: str = event_details.get("source")
+    deliver_to: str = event_details.get("deliver_to")
+    data: str = event_details.get("data")
+    operation: str = event_details.get("operation")
 
-    print(f"[info] handling event {id}, "
-          f"{source}->{deliver_to}: {operation}")
+    print(f"[info] handling event {event_id}, "
+          f"{source}->{deliver_to}: {operation},"
+          f"data: {data}")
 
     whitelist = ["get_cars", "get_status", "confirm_access"]
 
     if operation in whitelist:
-        return send_to_auth(id, details)
+        return send_to_auth(event_details)
 
 
 def consumer_job(args, config):
@@ -55,9 +56,9 @@ def consumer_job(args, config):
                 print(f"[error] {msg.error()}")
             else:
                 try:
-                    id = msg.key().decode('utf-8')
-                    details_str = msg.value().decode('utf-8')
-                    handle_event(id, details_str)
+                    event_id = msg.key().decode('utf-8')
+                    event_details_json = msg.value().decode('utf-8')
+                    handle_event(event_id, event_details_json)
                 except Exception as e:
                     print(f"[error] Malformed event received from " \
                           f"topic {topic}: {msg.value()}. {e}")

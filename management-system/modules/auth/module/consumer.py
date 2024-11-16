@@ -43,10 +43,12 @@ def handle_event(id, details_str):
 
     source: str = details.get("source")
     deliver_to: str = details.get("deliver_to")
+    data: str = details.get("data")
     operation: str = details.get("operation")
 
     print(f"[info] handling event {id}, "
-          f"{source}->{deliver_to}: {operation}")
+          f"{source}->{deliver_to}: {operation},"
+          f"data: {data}")
 
     return send_to_sender_car(id, details)
 

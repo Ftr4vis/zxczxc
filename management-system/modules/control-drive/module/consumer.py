@@ -2,10 +2,18 @@ import os
 import json
 import threading
 
+from shapely.geometry import Point, Polygon
 from uuid import uuid4
 from confluent_kafka import Consumer, OFFSET_BEGINNING
 
 from .producer import proceed_to_deliver
+
+GEOFENCE_POLYGON = Polygon([
+    (37.6173, 55.7558),  # Москва
+    (37.6200, 55.7500),
+    (37.6300, 55.7600),
+    (37.6173, 55.7558)
+])
 
 MODULE_NAME: str = os.getenv("MODULE_NAME")
 
@@ -13,6 +21,9 @@ def check_speed_and_coor(speed, coordinates):
     if speed > 200:
         return "stop"
     
+def is_within_geofence(latitude, longitude):
+    point = Point(latitude, longitude)
+    return GEOFENCE_POLYGON.contains(point)
 
 def send_to_manage_drive(id, details):
     details["deliver_to"] = "manage-drive"

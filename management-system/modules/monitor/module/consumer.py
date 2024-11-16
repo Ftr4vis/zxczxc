@@ -11,21 +11,19 @@ from .producer import proceed_to_deliver
 MODULE_NAME = os.getenv('MODULE_NAME')
 
 
-def handle_event(id, details_str):
-    details = json.loads(details_str)
+def handle_event(event_id, event_details_json):
+    event_details = json.loads(event_details_json)
 
-    print(f"[info] handling event {id}, " \
-          f"{details['source']}->{details['deliver_to']}: " \
-          f"{details['operation']}")
+    print(f"[info] handling event {event_id}, " \
+          f"{event_details['source']}->{event_details['deliver_to']}: " \
+          f"{event_details['operation']}")
 
-    if check_operation(id, details):
-        return proceed_to_deliver(id, details)
+    if check_operation(event_id, event_details):
+        return proceed_to_deliver(event_details)
 
     print(f"[error] !!!! policies check failed, delivery unauthorized !!! " \
-          f"id: {id}, {details['source']}->{details['deliver_to']}: " \
-          f"{details['operation']}")
-    print(f"[error] suspicious event details: {details}")
-
+          f"event_id: {event_id}, {event_details['source']}->{event_details['deliver_to']}: " \
+          f"{event_details['operation']}")
 
 def consumer_job(args, config):
     consumer = Consumer(config)
@@ -51,9 +49,9 @@ def consumer_job(args, config):
                 print(f"[error] {msg.error()}")
 
             else:
-                id = msg.key().decode('utf-8')
-                details_str = msg.value().decode('utf-8')
-                handle_event(id, details_str)
+                event_id = msg.key().decode('utf-8')
+                event_details_json = msg.value().decode('utf-8')
+                handle_event(event_id, event_details_json)
 
                 # except Exception as e:
                 #     print(f"[error] Malformed event received from " \

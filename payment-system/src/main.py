@@ -200,11 +200,10 @@ def get_prepayments_by_client(client_id: int):
 
 @app.errorhandler(HTTPException)
 def handle_exception(e):
-    response = e.get_response()
     return jsonify({
         "status": e.code,
         "name": e.name,
-    }), e.code
+    })
 
 
 def start_web():

@@ -7,6 +7,7 @@ WORKDIR /module
 
 RUN apt-get update && apt-get upgrade -y \
 && apt-get install -y librdkafka-dev gcc \
+&& apt-get clean \
 && addgroup --system module_user && adduser --system --group module_user
 
 COPY config/requirements.txt config/requirements.txt

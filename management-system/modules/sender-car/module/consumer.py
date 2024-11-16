@@ -44,7 +44,8 @@ def handle_event(event_id, event_details_json):
     operation: str = event_details.get("operation")
 
     print(f"[info] handling event {event_id}, "
-          f"{source}->{deliver_to}: {operation}")
+          f"{source}->{deliver_to}: {operation},"
+          f"data: {data}")
 
     if operation == "get_cars":
         return get_cars()

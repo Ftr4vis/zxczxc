@@ -24,17 +24,17 @@ _response_queue: multiprocessing.Queue = None
 app = Flask(__name__)
 
 
-def send_to_profile_client(details):
-    if not details:
+def send_to_profile_client(event_details):
+    if not event_details:
         abort(400)
 
-    details["deliver_to"] = "profile-client"
-    details["source"] = MODULE_NAME
-    details["id"] = uuid4().__str__()
+    event_details["deliver_to"] = "profile-client"
+    event_details["source"] = MODULE_NAME
+    event_details["event_id"] = uuid4().__str__()
 
     try:
-        _requests_queue.put(details)
-        print(f"{MODULE_NAME} update event: {details}")
+        _requests_queue.put(event_details)
+        print(f"{MODULE_NAME} update event: {event_details}")
     except Exception as e:
         print("[COM-MOBILE_DEBUG] malformed request", e)
         abort(400)
@@ -73,10 +73,10 @@ def wait_response():
 # List all avaible cars
 @app.route('/cars', methods=['GET'])
 def get_all_cars():
-    details_to_send = {
+    event_details_to_send = {
         "operation": "get_cars"
     }
-    send_to_profile_client(details_to_send)
+    send_to_profile_client(event_details_to_send)
     data = wait_response()
     return jsonify(data)
 
@@ -84,10 +84,10 @@ def get_all_cars():
 # List all avaible tariff
 @app.route('/tariff', methods=['GET'])
 def get_tariff():
-    details_to_send = {
+    event_details_to_send = {
         "operation": "get_tariff"
     }
-    send_to_profile_client(details_to_send)
+    send_to_profile_client(event_details_to_send)
     data = wait_response()
     return jsonify(data)
 
@@ -99,11 +99,11 @@ def select_car(brand):
     name = data.get('client_name')
     experience = data.get('experience')
     tariff = data.get('tariff')
-    details_to_send = {
+    event_details_to_send = {
         "operation": "select_car",
         "data": [name, experience, tariff, brand]
     }
-    send_to_profile_client(details_to_send)
+    send_to_profile_client(event_details_to_send)
     data = wait_response()
     return jsonify(data)
 

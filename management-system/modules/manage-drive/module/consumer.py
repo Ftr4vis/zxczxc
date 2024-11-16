@@ -11,47 +11,48 @@ from .producer import proceed_to_deliver
 MODULE_NAME: str = os.getenv("MODULE_NAME")
 
 
-def send_to_verify(id, details):
-    details["deliver_to"] = "verify"
-    proceed_to_deliver(id, details)
+def send_to_verify(event_details):
+    event_details["deliver_to"] = "verify"
+    proceed_to_deliver(event_details)
 
 
-def send_to_profile_client(id, details):
-    details["deliver_to"] = "profile-client"
-    proceed_to_deliver(id, details)
+def send_to_profile_client(event_details):
+    event_details["deliver_to"] = "profile-client"
+    proceed_to_deliver(event_details)
 
 
-def handle_event(id, details_str):
+def handle_event(event_id, event_details_json):
     """ Обработчик входящих в модуль задач. """
-    details = json.loads(details_str)
+    event_details = json.loads(event_details_json)
 
-    source: str = details.get("source")
-    deliver_to: str = details.get("deliver_to")
-    data: str = details.get("data")
-    operation: str = details.get("operation")
+    source: str = event_details.get("source")
+    deliver_to: str = event_details.get("deliver_to")
+    data: str = event_details.get("data")
+    operation: str = event_details.get("operation")
 
-    print(f"[info] handling event {id}, "
-          f"{source}->{deliver_to}: {operation}")
+    print(f"[info] handling event {event_id}, "
+          f"{source}->{deliver_to}: {operation},"
+          f"data: {data}")
 
     if operation == "get_cars":
-        return send_to_verify(id, details)
+        return send_to_verify(event_details)
     elif operation == "answer_cars":
-        details["data"] = [car['brand'] for car in data if car['occupied_by'] is None]
-        return send_to_profile_client(id, details)
+        event_details["data"] = [car['brand'] for car in data if car['occupied_by'] is None]
+        return send_to_profile_client(event_details)
     elif operation == "get_status":
-        return send_to_verify(id, details)
+        return send_to_verify(event_details)
     elif operation == "answer_status":
-        return send_to_profile_client(id, details)
+        return send_to_profile_client(event_details)
     elif operation == "access":
-        return send_to_profile_client(id, details)
+        return send_to_profile_client(event_details)
     elif operation == "confirm_access":
-        return send_to_verify(id, details)
+        return send_to_verify(event_details)
     elif operation == "return":
-        return send_to_profile_client(id, details)
+        return send_to_profile_client(event_details)
     elif operation == "telemetry":
         speed = data.get('speed')
         coordinates = data.get('coordinates')
-        print(f"{details["car"]} Скорость: {speed:.2f} км/ч, Координаты: {coordinates}")
+        print(f"{event_details["car"]} Скорость: {speed:.2f} км/ч, Координаты: {coordinates}")
 
 
 def consumer_job(args, config):
@@ -77,9 +78,9 @@ def consumer_job(args, config):
                 print(f"[error] {msg.error()}")
             else:
                 try:
-                    id = msg.key().decode('utf-8')
-                    details_str = msg.value().decode('utf-8')
-                    handle_event(id, details_str)
+                    event_id = msg.key().decode('utf-8')
+                    event_details_json = msg.value().decode('utf-8')
+                    handle_event(event_id, event_details_json)
                 except Exception as e:
                     print(f"[error] Malformed event received from " \
                           f"topic {topic}: {msg.value()}. {e}")

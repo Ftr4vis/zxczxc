@@ -17,10 +17,9 @@ MODULE_NAME: str = os.getenv("MODULE_NAME")
 
 #def auth(data):
 
-def send_to_sender_car(event_id, details):
+def send_to_sender_car(details):
     details["deliver_to"] = "sender-car"
-    details["event_id"] = event_id
-    proceed_to_deliver(event_id, details)
+    proceed_to_deliver(details)
 
 def create_token(user_id, role, expiration_minutes=30):
     payload = {
@@ -51,7 +50,7 @@ def handle_event(event_id, details_str):
           f"{source}->{deliver_to}: {operation},"
           f"data: {data}")
 
-    return send_to_sender_car(event_id, details)
+    return send_to_sender_car(details)
 
 
 def consumer_job(args, config):

@@ -19,6 +19,7 @@ MODULE_NAME: str = os.getenv("MODULE_NAME")
 
 def send_to_sender_car(event_id, details):
     details["deliver_to"] = "sender-car"
+    details["event_id"] = event_id
     proceed_to_deliver(event_id, details)
 
 def create_token(user_id, role, expiration_minutes=30):

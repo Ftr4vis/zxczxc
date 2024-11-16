@@ -17,9 +17,9 @@ MODULE_NAME: str = os.getenv("MODULE_NAME")
 
 #def auth(data):
 
-def send_to_sender_car(id, details):
+def send_to_sender_car(event_id, details):
     details["deliver_to"] = "sender-car"
-    proceed_to_deliver(id, details)
+    proceed_to_deliver(event_id, details)
 
 def create_token(user_id, role, expiration_minutes=30):
     payload = {
@@ -37,7 +37,7 @@ def verify_token(token):
     except InvalidTokenError:
         raise ValueError("Invalid token")
 
-def handle_event(id, details_str):
+def handle_event(event_id, details_str):
     """ Обработчик входящих в модуль задач. """
     details = json.loads(details_str)
 
@@ -46,11 +46,11 @@ def handle_event(id, details_str):
     data: str = details.get("data")
     operation: str = details.get("operation")
 
-    print(f"[info] handling event {id}, "
+    print(f"[info] handling event {event_id}, "
           f"{source}->{deliver_to}: {operation},"
           f"data: {data}")
 
-    return send_to_sender_car(id, details)
+    return send_to_sender_car(event_id, details)
 
 
 def consumer_job(args, config):

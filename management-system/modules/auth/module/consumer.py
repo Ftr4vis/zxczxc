@@ -17,9 +17,9 @@ MODULE_NAME: str = os.getenv("MODULE_NAME")
 
 #def auth(data):
 
-def send_to_sender_car(details):
-    details["deliver_to"] = "sender-car"
-    proceed_to_deliver(details)
+def send_to_sender_car(event_details):
+    event_details["deliver_to"] = "sender-car"
+    proceed_to_deliver(event_details)
 
 def create_token(user_id, role, expiration_minutes=30):
     payload = {
@@ -37,20 +37,20 @@ def verify_token(token):
     except InvalidTokenError:
         raise ValueError("Invalid token")
 
-def handle_event(event_id, details_str):
+def handle_event(event_id, event_details_json):
     """ Обработчик входящих в модуль задач. """
-    details = json.loads(details_str)
+    event_details = json.loads(event_details_json)
 
-    source: str = details.get("source")
-    deliver_to: str = details.get("deliver_to")
-    data: str = details.get("data")
-    operation: str = details.get("operation")
+    source: str = event_details.get("source")
+    deliver_to: str = event_details.get("deliver_to")
+    data: str = event_details.get("data")
+    operation: str = event_details.get("operation")
 
     print(f"[info] handling event {event_id}, "
           f"{source}->{deliver_to}: {operation},"
           f"data: {data}")
 
-    return send_to_sender_car(details)
+    return send_to_sender_car(event_details)
 
 
 def consumer_job(args, config):
@@ -77,8 +77,8 @@ def consumer_job(args, config):
             else:
                 try:
                     event_id = msg.key().decode('utf-8')
-                    details_str = msg.value().decode('utf-8')
-                    handle_event(event_id, details_str)
+                    event_details_json = msg.value().decode('utf-8')
+                    handle_event(event_id, event_details_json)
                 except Exception as e:
                     print(f"[error] Malformed event received from " \
                           f"topic {topic}: {msg.value()}. {e}")

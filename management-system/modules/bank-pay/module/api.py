@@ -24,17 +24,17 @@ _response_queue: multiprocessing.Queue = None
 app = Flask(__name__)
 
 
-def send_to_profile_client(details):
-    if not details:
+def send_to_profile_client(event_details):
+    if not event_details:
         abort(400)
 
-    details["deliver_to"] = "profile-client"
-    details["source"] = MODULE_NAME
-    details["id"] = uuid4().__str__()
+    event_details["deliver_to"] = "profile-client"
+    event_details["source"] = MODULE_NAME
+    event_details["event_id"] = uuid4().__str__()
 
     try:
-        _requests_queue.put(details)
-        print(f"{MODULE_NAME} update event: {details}")
+        _requests_queue.put(event_details)
+        print(f"{MODULE_NAME} update event: {event_details}")
     except Exception as e:
         print("[BANK-PAY_DEBUG] malformed request", e)
         abort(400)
@@ -43,12 +43,12 @@ def send_to_profile_client(details):
 # Handler for payment system
 @app.route('/confirm_prepayment/<string:name>', methods=['POST'])
 def confirm_prepayment(name):
-    details_to_send = {
+    event_details_to_send = {
         "operation": "confirm_prepayment",
         "status": request.json['status'],
         "name": name
     }
-    send_to_profile_client(details_to_send)
+    send_to_profile_client(event_details_to_send)
     print(f'Потверждена предоплата: {request.json}')
     return jsonify(request.json)
 
@@ -57,11 +57,11 @@ def confirm_prepayment(name):
 @app.route('/confirm_payment/<string:name>', methods=['POST'])
 def confirm_payment(name):
     print(f'Потверждена оплата: {request.json}')
-    response = requests.get(f'{PAYMENT_URL}/invoices/{request.json['id']}/receipt')
+    response = requests.get(f'{PAYMENT_URL}/invoices/{request.json['event_id']}/receipt')
     if response.status_code == 200:
         receipt = response.json()['receipt']
-        details_to_send = {"operation": "confirm_payment", "receipt": receipt, "name": name}
-        send_to_profile_client(details_to_send)
+        event_details_to_send = {"operation": "confirm_payment", "receipt": receipt, "name": name}
+        send_to_profile_client(event_details_to_send)
         return "ok"
 
 

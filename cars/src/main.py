@@ -1,5 +1,6 @@
 from flask import Flask, jsonify, request
 from pathlib import Path
+from urllib.parse import quote
 import json
 import random
 import time
@@ -179,7 +180,8 @@ def access(person):
 def occupy_car(person):
     global data
     global flag
-    requests.post(f'{MANAGMENT_URL}/access/{person}')
+    safe_person = quote(person)
+    requests.post(f'{MANAGMENT_URL}/access/{safe_person}')
     while flag:
         time.sleep(1) # Реализация разделения модуля коммуникации
     if data['access']:

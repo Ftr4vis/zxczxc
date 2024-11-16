@@ -54,9 +54,9 @@ def consumer_job(args, config):
                 print(f"[error] {msg.error()}")
             else:
                 try:
-                    id = msg.key().decode('utf-8')
+                    event_id = msg.key().decode('utf-8')
                     details_str = msg.value().decode('utf-8')
-                    handle_event(id, details_str)
+                    handle_event(event_id, details_str)
                 except Exception as e:
                     print(f"[error] Malformed event received from " \
                           f"topic {topic}: {msg.value()}. {e}")

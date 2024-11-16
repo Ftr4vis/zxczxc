@@ -12,10 +12,9 @@ _response_queue: multiprocessing.Queue = None
 MODULE_NAME = os.getenv("MODULE_NAME")
 
 
-def send_to_profile_client(event_id, details):
-    details["deliver_to"] = "profile-client"
-    details["event_id"] = event_id
-    proceed_to_deliver(event_id, details)
+def send_to_profile_client(event_details):
+    event_details["deliver_to"] = "profile-client"
+    proceed_to_deliver(event_details)
 
 
 def create_payment(data):
@@ -36,18 +35,19 @@ def create_prepayment(data):
         return response.json()
 
 
-def handle_event(event_id, details_str):
+def handle_event(event_id, event_details_json):
 
     """ Обработчик входящих в модуль задач. """
-    details = json.loads(details_str)
+    event_details = json.loads(event_details_json)
 
-    source: str = details.get("source")
-    deliver_to: str = details.get("deliver_to")
-    data: str = details.get("data")
-    operation: str = details.get("operation")
+    source: str = event_details.get("source")
+    deliver_to: str = event_details.get("deliver_to")
+    data: str = event_details.get("data")
+    operation: str = event_details.get("operation")
 
     print(f"[info] handling event {event_id}, "
-          f"{source}->{deliver_to}: {operation}")
+          f"{source}->{deliver_to}: {operation},"
+          f"data: {data}")
 
     if operation in ("get_prepayment_id", "get_payment_id"):
         details["data"] = create_prepayment(data)
@@ -80,8 +80,8 @@ def consumer_job(args, config):
             else:
                 try:
                     event_id = msg.key().decode('utf-8')
-                    details_str = msg.value().decode('utf-8')
-                    handle_event(event_id, details_str)
+                    event_details_json = msg.value().decode('utf-8')
+                    handle_event(event_id, event_details_json)
                 except Exception as e:
                     print(f"[error] Malformed event received from " \
                           f"topic {topic}: {msg.value()}. {e}")

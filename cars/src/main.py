@@ -200,7 +200,6 @@ def occupy_car(person):
 
 @app.errorhandler(HTTPException)
 def handle_exception(e):
-    response = e.get_response()
     return jsonify({
         "status": e.code,
         "name": e.name,

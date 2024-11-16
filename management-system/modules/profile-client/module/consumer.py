@@ -37,19 +37,19 @@ def initialize_database():
     Base.metadata.create_all(engine)
 
 
-def send_to_com_mobile(id, details):
-    details["deliver_to"] = "com-mobile"
-    proceed_to_deliver(id, details)
+def send_to_com_mobile(event_details):
+    event_details["deliver_to"] = "com-mobile"
+    proceed_to_deliver(event_details)
 
 
-def send_to_manage_drive(id, details):
-    details["deliver_to"] = "manage-drive"
-    proceed_to_deliver(id, details)
+def send_to_manage_drive(event_details):
+    event_details["deliver_to"] = "manage-drive"
+    proceed_to_deliver(event_details)
 
 
-def send_to_bank_pay(id, details):
-    details["deliver_to"] = "bank-pay"
-    proceed_to_deliver(id, details)
+def send_to_bank_pay(event_details):
+    event_details["deliver_to"] = "bank-pay"
+    proceed_to_deliver(event_details)
 
 
 def counter_prepayment(car):
@@ -133,10 +133,9 @@ def return_car(session, name, trip_time):
 def access(session, name):
     query = session.query(Client)
     client = query.filter_by(client_name=name).one_or_none()
-    if client:
-        if client.prepayment_status == 'paid':
-            print(f"Доступ разрешен {name} до {client.car}")
-            return {'access': True, 'tariff': client.tariff, 'car': client.car, 'name': name}
+    if client and client.prepayment_status == 'paid':
+        print(f"Доступ разрешен {name} до {client.car}")
+        return {'access': True, 'tariff': client.tariff, 'car': client.car, 'name': name}
 
 
 def final_receipt(session, receipt, name):
@@ -163,56 +162,57 @@ def final_receipt(session, receipt, name):
         return final_receipt
 
 
-def handle_event(id, details_str):
+def handle_event(event_id, event_details_json):
     """ Обработчик входящих в модуль задач. """
     Session = sessionmaker(bind=engine)
     session = Session()
 
-    details = json.loads(details_str)
+    event_details = json.loads(event_details_json)
 
-    source: str = details.get("source")
-    deliver_to: str = details.get("deliver_to")
-    data: str = details.get("data")
-    operation: str = details.get("operation")
+    source: str = event_details.get("source")
+    deliver_to: str = event_details.get("deliver_to")
+    data: str = event_details.get("data")
+    operation: str = event_details.get("operation")
 
-    print(f"[info] handling event {id}, "
-          f"{source}->{deliver_to}: {operation}")
+    print(f"[info] handling event {event_id}, "
+          f"{source}->{deliver_to}: {operation},"
+          f"data: {data}")
 
     if operation == "get_tariff":
-        details["data"] = TARIFF
-        return send_to_com_mobile(id, details)
+        event_details["data"] = TARIFF
+        return send_to_com_mobile(event_details)
     elif operation == "get_cars":
-        return send_to_manage_drive(id, details)
+        return send_to_manage_drive(event_details)
     elif operation == "answer_cars":
-        return send_to_com_mobile(id, details)
+        return send_to_com_mobile(event_details)
     elif operation == "select_car":
-        details["data"] = select_car(session, data)
-        details["operation"] = "get_status"
-        return send_to_manage_drive(id, details)
+        event_details["data"] = select_car(session, data)
+        event_details["operation"] = "get_status"
+        return send_to_manage_drive(event_details)
     elif operation == "answer_status":
-        details["data"] = prepayment(session, data)
-        details["operation"] = "get_prepayment_id"
-        return send_to_bank_pay(id, details)
+        event_details["data"] = prepayment(session, data)
+        event_details["operation"] = "get_prepayment_id"
+        return send_to_bank_pay(event_details)
     elif operation == "get_prepayment_id":
-        return send_to_com_mobile(id, details)
+        return send_to_com_mobile(event_details)
     elif operation == "confirm_prepayment":
-        name = details.get("name")
-        status = details.get("status")
+        name = event_details.get("name")
+        status = event_details.get("status")
         confirm_prepayment(session, name, status)
     elif operation == "access":
-        details["access"] = access(session, details["name"])
-        details["operation"] = "confirm_access"
-        return send_to_manage_drive(id, details)
+        event_details["access"] = access(session, event_details["name"])
+        event_details["operation"] = "confirm_access"
+        return send_to_manage_drive(event_details)
     elif operation == "return":
-        details["data"] = return_car(session, details["name"], details["trip_time"])
-        details["operation"] = "get_payment_id"
-        return send_to_bank_pay(id, details)
+        event_details["data"] = return_car(session, event_details["name"], event_details["trip_time"])
+        event_details["operation"] = "get_payment_id"
+        return send_to_bank_pay(event_details)
     elif operation == "get_payment_id":
-        return send_to_com_mobile(id, details)
+        return send_to_com_mobile(event_details)
     elif operation == "confirm_payment":
-        details["data"] = final_receipt(session, details["receipt"], details["name"])
-        details["operation"] = "final_receipt"
-        return send_to_com_mobile(id, details)
+        event_details["data"] = final_receipt(session, event_details["receipt"], event_details["name"])
+        event_details["operation"] = "final_receipt"
+        return send_to_com_mobile(event_details)
 
 
 def consumer_job(args, config):
@@ -238,9 +238,9 @@ def consumer_job(args, config):
                 print(f"[error] {msg.error()}")
             else:
                 try:
-                    id = msg.key().decode('utf-8')
-                    details_str = msg.value().decode('utf-8')
-                    handle_event(id, details_str)
+                    event_id = msg.key().decode('utf-8')
+                    event_details_json = msg.value().decode('utf-8')
+                    handle_event(event_id, event_details_json)
                 except Exception as e:
                     print(f"[error] Malformed event received from " \
                           f"topic {topic}: {msg.value()}. {e}")

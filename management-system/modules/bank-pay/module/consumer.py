@@ -30,7 +30,7 @@ def create_prepayment(data):
     name = data[0]
     amount = data[1]
     response = requests.post(f'{PAYMENT_URL}/clients', json={'name': name})
-    if response.status_code == 200 or 201:
+    if response.status_code in (200, 201):
         response = requests.post(f'{PAYMENT_URL}/clients/{response.json()[0]['id']}/prepayment', json={'amount': amount})
         return response.json()
 

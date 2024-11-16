@@ -51,7 +51,7 @@ def handle_event(event_id, event_details_json):
 
     if operation in ("get_prepayment_id", "get_payment_id"):
         details["data"] = create_prepayment(data)
-        return send_to_profile_client(event_id, details)
+        return send_to_profile_client(event_details)
 
 def consumer_job(args, config):
     consumer = Consumer(config)

@@ -12,9 +12,9 @@ MODULE_NAME: str = os.getenv("MODULE_NAME")
 
 #def auth(data):
 
-def send_to_sender_car(id, details):
+def send_to_sender_car(details):
     details["deliver_to"] = "sender-car"
-    proceed_to_deliver(id, details)
+    proceed_to_deliver(details)
 
 
 def handle_event(id, details_str):

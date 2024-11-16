@@ -23,17 +23,17 @@ _response_queue: multiprocessing.Queue = None
 app = Flask(__name__)
 
 
-def send_to_control_drive(details):
-    if not details:
+def send_to_control_drive(event_details):
+    if not event_details:
         abort(400)
 
-    details["deliver_to"] = "control-drive"
-    details["source"] = MODULE_NAME
-    details["id"] = uuid4().__str__()
+    event_details["deliver_to"] = "control-drive"
+    event_details["source"] = MODULE_NAME
+    event_details["event_id"] = uuid4().__str__()
 
     try:
-        _requests_queue.put(details)
-        print(f"{MODULE_NAME} update event: {details}")
+        _requests_queue.put(event_details)
+        print(f"{MODULE_NAME} update event: {event_details}")
     except Exception as e:
         print("[RECEIVER_CAR_DEBUG] malformed request", e)
         abort(400)
@@ -43,10 +43,10 @@ def send_to_control_drive(details):
 @app.route('/telemetry/<string:brand>', methods=['POST'])
 def telemetry(brand):
     data = request.json['status']
-    details_to_send = {"data": data,
+    event_details_to_send = {"data": data,
                        "operation": "telemetry",
                        "car": brand}
-    send_to_control_drive(details_to_send)
+    send_to_control_drive(event_details_to_send)
     return jsonify("ok")
 
 
@@ -54,9 +54,9 @@ def telemetry(brand):
 def cars():
     data = request.json
     cars = data.get("cars")
-    details_to_send = {"data": cars,
+    event_details_to_send = {"data": cars,
                        "operation": "answer_cars"}
-    send_to_control_drive(details_to_send)
+    send_to_control_drive(event_details_to_send)
     return jsonify("ok")
 
 
@@ -64,9 +64,9 @@ def cars():
 def status():
     data = request.json
     status = data.get("status")
-    details_to_send = {"data": status,
+    event_details_to_send = {"data": status,
                        "operation": "answer_status"}
-    send_to_control_drive(details_to_send)
+    send_to_control_drive(event_details_to_send)
     return jsonify("ok")
 
 
@@ -75,20 +75,20 @@ def status():
 def return_car(name):
     data = request.json
     trip_time = data.get('status')['trip_time']
-    details_to_send = {"data": data,
+    event_details_to_send = {"data": data,
                        "trip_time": trip_time,
                        "name": name,
                        "operation": "return"}
-    send_to_control_drive(details_to_send)
+    send_to_control_drive(event_details_to_send)
     return jsonify("ok")
 
 
 # Handler for access car
 @app.route('/access/<string:name>', methods=['POST'])
 def access(name):
-    details_to_send = {"operation": "access",
+    event_details_to_send = {"operation": "access",
                        "name": name}
-    send_to_control_drive(details_to_send)
+    send_to_control_drive(event_details_to_send)
     return jsonify("ok")
 
 

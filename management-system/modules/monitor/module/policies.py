@@ -15,14 +15,14 @@ policies = (
 )
 
 
-def check_operation(id, details) -> bool:
+def check_operation(event_id, event_details) -> bool:
     """ Проверка возможности совершения обращения. """
-    src: str = details.get("source")
-    dst: str = details.get("deliver_to")
+    src: str = event_details.get("source")
+    dst: str = event_details.get("deliver_to")
 
     if not all((src, dst)):
         return False
 
-    print(f"[info] checking policies for event {id}, {src}->{dst}")
+    print(f"[info] checking policies for event {event_id}, {src}->{dst}")
 
     return {"src": src, "dst": dst} in policies

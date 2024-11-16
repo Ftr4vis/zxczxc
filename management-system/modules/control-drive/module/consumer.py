@@ -25,37 +25,37 @@ def is_within_geofence(latitude, longitude):
     point = Point(latitude, longitude)
     return GEOFENCE_POLYGON.contains(point)
 
-def send_to_manage_drive(id, details):
-    details["deliver_to"] = "manage-drive"
-    proceed_to_deliver(id, details)
+def send_to_manage_drive(event_details):
+    event_details["deliver_to"] = "manage-drive"
+    proceed_to_deliver(event_details)
 
-def send_to_sender_car(id, details):
-    details["deliver_to"] = "sender-car"
-    proceed_to_deliver(id, details)
+def send_to_sender_car(event_details):
+    event_details["deliver_to"] = "sender-car"
+    proceed_to_deliver(event_details)
 
-def handle_event(id, details_str):
+def handle_event(event_id, event_details_json):
     """ Обработчик входящих в модуль задач. """
-    details = json.loads(details_str)
+    event_details = json.loads(event_details_json)
 
-    source: str = details.get("source")
-    deliver_to: str = details.get("deliver_to")
-    data: str = details.get("data")
-    operation: str = details.get("operation")
+    source: str = event_details.get("source")
+    deliver_to: str = event_details.get("deliver_to")
+    data: str = event_details.get("data")
+    operation: str = event_details.get("operation")
 
-    print(f"[info] handling event {id}, "
+    print(f"[info] handling event {event_id}, "
           f"{source}->{deliver_to}: {operation}")
 
     if operation != "telemetry":
-        return send_to_manage_drive(id, details)
+        return send_to_manage_drive(event_details)
     else:
         speed = data.get('speed')
         coordinates = data.get('coordinates')
         command = check_speed_and_coor(speed, coordinates)
         if command == "stop":
-            details["operation"] = "stop"
-            return send_to_sender_car(id, details)
+            event_details["operation"] = "stop"
+            return send_to_sender_car(event_details)
         else:
-            return send_to_manage_drive(id, details)
+            return send_to_manage_drive(event_details)
 
 def consumer_job(args, config):
     consumer = Consumer(config)
@@ -80,9 +80,9 @@ def consumer_job(args, config):
                 print(f"[error] {msg.error()}")
             else:
                 try:
-                    id = msg.key().decode('utf-8')
-                    details_str = msg.value().decode('utf-8')
-                    handle_event(id, details_str)
+                    event_id = msg.key().decode('utf-8')
+                    event_details_json = msg.value().decode('utf-8')
+                    handle_event(event_id, event_details_json)
                 except Exception as e:
                     print(f"[error] Malformed event received from " \
                           f"topic {topic}: {msg.value()}. {e}")

@@ -28,7 +28,7 @@ def producer_job(_, config, requests_queue: multiprocessing.Queue):
         producer.produce(
             topic,
             json.dumps(event_details),
-            event_details['id'],
+            event_details['event_id'],
             callback=delivery_callback
         )
 

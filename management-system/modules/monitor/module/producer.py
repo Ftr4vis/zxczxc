@@ -10,8 +10,8 @@ _requests_queue: multiprocessing.Queue = None
 MODULE_NAME = os.getenv('MODULE_NAME')
 
 
-def proceed_to_deliver(id, details):
-    _requests_queue.put(details)
+def proceed_to_deliver(event_details):
+    _requests_queue.put(event_details)
 
 
 def producer_job(_, config, requests_queue: multiprocessing.Queue):
@@ -28,7 +28,7 @@ def producer_job(_, config, requests_queue: multiprocessing.Queue):
         producer.produce(
             topic,
             json.dumps(event_details),
-            event_details['id'],
+            event_details['event_id'],
             callback=delivery_callback
         )
 
